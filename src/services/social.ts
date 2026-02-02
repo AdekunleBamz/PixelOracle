@@ -129,11 +129,25 @@ export async function postToAllPlatforms(
 ): Promise<SocialPostResult> {
   console.log("\n📣 Broadcasting to social platforms...\n");
 
-  // Post to both platforms in parallel
-  const [farcasterResult, twitterResult] = await Promise.all([
-    postToFarcaster(text, imageUrl),
-    postToTwitter(text, imageBuffer),
-  ]);
+  // Post to Farcaster FIRST (it has the image)
+  const farcasterResult = await postToFarcaster(text, imageUrl);
+
+  // Build Twitter text - include Farcaster link if available
+  let twitterText = text;
+  if (farcasterResult.success && farcasterResult.hash) {
+    // Warpcast URL format: https://warpcast.com/~/conversations/{hash}
+    const warpcastUrl = `https://warpcast.com/~/conversations/${farcasterResult.hash}`;
+    // Add Farcaster link to Twitter post (truncate main text if needed)
+    const linkText = `\n\n🖼️ See artwork: ${warpcastUrl}`;
+    const maxTextLength = 280 - linkText.length;
+    if (twitterText.length > maxTextLength) {
+      twitterText = twitterText.substring(0, maxTextLength - 3) + "...";
+    }
+    twitterText = twitterText + linkText;
+  }
+
+  // Now post to Twitter with Farcaster link
+  const twitterResult = await postToTwitter(twitterText, imageBuffer);
 
   return {
     farcaster: farcasterResult,
@@ -146,19 +160,21 @@ export async function postToAllPlatforms(
 // ============================================
 
 export function formatSocialPost(
-  message: string,
+  title: string,
   baseScanUrl: string,
   openSeaUrl: string
 ): string {
-  // Keep under 280 chars for Twitter compatibility
-  // Include both BaseScan tx link and OpenSea NFT link
-  const links = `\n\n⛓️ ${baseScanUrl}\n🖼️ ${openSeaUrl}`;
-  const maxMessageLength = 280 - links.length - 10;
+  // Farcaster: 320 chars, Twitter: 280 chars
+  // Use shorter format to fit both platforms
   
-  let truncatedMessage = message;
-  if (message.length > maxMessageLength) {
-    truncatedMessage = message.substring(0, maxMessageLength - 3) + "...";
-  }
-
-  return `${truncatedMessage}${links}`;
+  // Shorten URLs for display (full URLs still work as links)
+  const shortBaseScan = baseScanUrl.replace('https://basescan.org/tx/', 'basescan.org/tx/').substring(0, 35) + '...';
+  const shortOpenSea = 'opensea.io/assets/base/...';
+  
+  const links = `\n\n⛓️ ${shortBaseScan}\n🖼️ ${shortOpenSea}`;
+  
+  // Create a punchy post with just the title
+  const post = `🎨 New artwork minted!\n\n"${title}"\n\nAutonomously created & minted on Base by PixelOracle 🔮${links}`;
+  
+  return post;
 }

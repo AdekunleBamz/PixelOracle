@@ -257,14 +257,11 @@ async function createArtworkCycle(): Promise<void> {
     // Step 6: Generate social post
     agentState.status = "posting";
     console.log("\n✍️ Step 5: Generating social post...");
-    const oracleMessage = await generateOracleMessage(
-      artConcept.theme,
-      artConcept.title
-    );
     
     const baseScanUrl = getBaseScanUrl(txHash);
     const openSeaUrl = getOpenSeaUrl(mintedId);
-    const socialPost = formatSocialPost(oracleMessage, baseScanUrl, openSeaUrl);
+    // Use title for concise social posts (fits 280/320 char limits)
+    const socialPost = formatSocialPost(artConcept.title, baseScanUrl, openSeaUrl);
 
     // Step 7: Post to social media
     console.log("\n📢 Step 6: Sharing with the world...");
