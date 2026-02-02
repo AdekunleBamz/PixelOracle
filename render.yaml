@@ -1,0 +1,38 @@
+# render.yaml - Render Blueprint
+# Deploy with: https://render.com/deploy
+
+services:
+  - type: web
+    name: pixeloracle
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run agent
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PRIVATE_KEY
+        sync: false
+      - key: NFT_CONTRACT_ADDRESS
+        sync: false
+      - key: NETWORK
+        value: base
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PINATA_API_KEY
+        sync: false
+      - key: PINATA_SECRET_KEY
+        sync: false
+      - key: NEYNAR_API_KEY
+        sync: false
+      - key: FARCASTER_SIGNER_UUID
+        sync: false
+      - key: TWITTER_API_KEY
+        sync: false
+      - key: TWITTER_API_SECRET
+        sync: false
+      - key: TWITTER_ACCESS_TOKEN
+        sync: false
+      - key: TWITTER_ACCESS_SECRET
+        sync: false
+      - key: CREATION_INTERVAL_MINUTES
+        value: "60"
