@@ -16,6 +16,7 @@ import {
   postToAllPlatforms,
   formatSocialPost,
 } from "./services/social.js";
+import http from "http";
 
 // ============================================
 // 🔮 PixelOracle - Autonomous Art Agent
@@ -33,12 +34,57 @@ console.log(`
 `);
 
 // ============================================
+// Keep-Alive HTTP Server (for Render free tier)
+// ============================================
+
+const PORT = process.env.PORT || 3000;
+let lastCycleTime = new Date();
+let totalMinted = 0;
+
+function startKeepAliveServer() {
+  const server = http.createServer((req, res) => {
+    if (req.url === "/health" || req.url === "/") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({
+        status: "alive",
+        agent: "PixelOracle",
+        lastCycle: lastCycleTime.toISOString(),
+        totalMinted: totalMinted,
+        uptime: process.uptime(),
+      }));
+    } else {
+      res.writeHead(404);
+      res.end("Not found");
+    }
+  });
+
+  server.listen(PORT, () => {
+    console.log(`🌐 Keep-alive server running on port ${PORT}`);
+  });
+
+  // Self-ping every 10 minutes to prevent Render from sleeping
+  const RENDER_URL = process.env.RENDER_EXTERNAL_URL;
+  if (RENDER_URL) {
+    setInterval(async () => {
+      try {
+        const response = await fetch(`${RENDER_URL}/health`);
+        console.log(`🏓 Self-ping: ${response.status}`);
+      } catch (error) {
+        console.log(`🏓 Self-ping failed (non-critical)`);
+      }
+    }, 10 * 60 * 1000); // 10 minutes
+    console.log(`🏓 Self-ping enabled (every 10 mins)`);
+  }
+}
+
+// ============================================
 // Main Creation Cycle
 // ============================================
 
 async function createArtworkCycle(): Promise<void> {
   console.log("\n🎨 Starting new artwork creation cycle...\n");
   console.log("=".repeat(50));
+  lastCycleTime = new Date();
 
   try {
     // Step 0: Check balance
@@ -147,11 +193,14 @@ async function runAutonomousLoop(): Promise<void> {
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
 
+  // Start keep-alive server for Render
+  startKeepAliveServer();
+
   if (args.includes("--once")) {
     // Single creation mode
     console.log("🎯 Running single creation cycle...\n");
     await createArtworkCycle();
-    process.exit(0);
+    // Don't exit - keep server running
   } else {
     // Autonomous loop mode
     await runAutonomousLoop();
