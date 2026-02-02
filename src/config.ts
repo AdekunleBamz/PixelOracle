@@ -120,6 +120,26 @@ export const pixelOracleABI = [
     stateMutability: "view",
     type: "function",
   },
+  // Events for listening
+  {
+    type: "event",
+    name: "ArtworkCreated",
+    inputs: [
+      { name: "tokenId", type: "uint256", indexed: true },
+      { name: "creator", type: "address", indexed: true },
+      { name: "metadataURI", type: "string", indexed: false },
+      { name: "timestamp", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    type: "event",
+    name: "Transfer",
+    inputs: [
+      { name: "from", type: "address", indexed: true },
+      { name: "to", type: "address", indexed: true },
+      { name: "tokenId", type: "uint256", indexed: true },
+    ],
+  },
 ] as const;
 
 console.log("⚙️ Configuration loaded");

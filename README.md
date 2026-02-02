@@ -2,9 +2,18 @@
 
 **An Autonomous AI Artist Agent on Base**
 
+> 🏆 **OpenClaw Builder Quest Submission** - An AI agent that converts computation → culture → onchain provenance
+
 PixelOracle is a fully autonomous AI agent that creates, mints, and shares unique digital artworks on the Base blockchain. No human in the loop - just pure autonomous creativity.
 
 ![PixelOracle Banner](https://via.placeholder.com/800x400/1a1a2e/eee?text=PixelOracle+%E2%9C%A8)
+
+## 🎯 Why PixelOracle?
+
+- **Truly Autonomous**: Runs 24/7 without human intervention
+- **Publicly Verifiable**: Live `/status` endpoint proves autonomy
+- **On-Chain Proof**: Every mint creates immutable blockchain records
+- **AI-Native**: GPT-4 concepts + DALL-E 3 artwork generation
 
 ## ✨ Features
 
@@ -13,6 +22,37 @@ PixelOracle is a fully autonomous AI agent that creates, mints, and shares uniqu
 - 📢 **Social Sharing** - Posts to Farcaster and X/Twitter automatically
 - 🔄 **Fully Autonomous** - Runs continuously without human intervention
 - 🎭 **Themed Collections** - Generates art across multiple themes (surreal, cyberpunk, cosmic, etc.)
+- 📊 **Public Status API** - `/status` endpoint for real-time monitoring
+
+## 📡 Live Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `/` | Health check |
+| `/status` | Full agent state, metrics, and onchain proof |
+| `/proof` | Minimal proof of autonomy |
+
+### Sample `/status` Response
+```json
+{
+  "agent": "🔮 PixelOracle - Autonomous AI Artist",
+  "status": "idle",
+  "autonomous": true,
+  "humanInLoop": false,
+  "lastMintTx": "0x...",
+  "nextScheduledCycle": "2024-01-15T12:00:00.000Z",
+  "totalMinted": 15,
+  "contract": "0x09ED29b4b822a41bf14B2efE8C54bA753A35d5B6",
+  "network": "base"
+}
+```
+
+## 🔗 Verification Links
+
+- **Contract**: [BaseScan](https://basescan.org/address/0x09ED29b4b822a41bf14B2efE8C54bA753A35d5B6)
+- **Collection**: [OpenSea](https://opensea.io/collection/pixeloracle)
+- **X/Twitter**: [@PixelOracle](https://x.com/PixelOracle)
+- **Farcaster**: [Agent Feed](https://warpcast.com/pixeloracle)
 
 ## 🏗️ Architecture
 

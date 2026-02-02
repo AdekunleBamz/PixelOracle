@@ -21,6 +21,32 @@ interface NFTMetadata {
 }
 
 // ============================================
+// Retry Helper
+// ============================================
+
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  delayMs: number = 5000,
+  label: string = "Operation"
+): Promise<T> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      console.log(`   ⚠️ ${label} attempt ${attempt} failed: ${error.message?.substring(0, 100)}`);
+      if (attempt < maxRetries) {
+        console.log(`   🔄 Retrying in ${delayMs / 1000}s...`);
+        await new Promise(r => setTimeout(r, delayMs));
+      } else {
+        throw error;
+      }
+    }
+  }
+  throw new Error(`${label} failed after ${maxRetries} attempts`);
+}
+
+// ============================================
 // Upload Image to IPFS
 // ============================================
 
@@ -30,39 +56,47 @@ export async function uploadImageToIPFS(
 ): Promise<string> {
   console.log("📤 Uploading image to IPFS via Pinata...");
 
-  const formData = new FormData();
-  const uint8Array = new Uint8Array(imageBuffer);
-  const blob = new Blob([uint8Array], { type: "image/png" });
-  formData.append("file", blob, fileName);
+  return withRetry(async () => {
+    const formData = new FormData();
+    const uint8Array = new Uint8Array(imageBuffer);
+    const blob = new Blob([uint8Array], { type: "image/png" });
+    formData.append("file", blob, fileName);
 
-  const metadata = JSON.stringify({
-    name: fileName,
-    keyvalues: {
-      project: "PixelOracle",
-      type: "artwork",
-    },
-  });
-  formData.append("pinataMetadata", metadata);
+    const metadata = JSON.stringify({
+      name: fileName,
+      keyvalues: {
+        project: "PixelOracle",
+        type: "artwork",
+      },
+    });
+    formData.append("pinataMetadata", metadata);
 
-  const response = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
-    method: "POST",
-    headers: {
-      pinata_api_key: config.pinataApiKey,
-      pinata_secret_api_key: config.pinataSecretKey,
-    },
-    body: formData,
-  });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Pinata upload failed: ${error}`);
-  }
+    const response = await fetch(`${PINATA_API_URL}/pinning/pinFileToIPFS`, {
+      method: "POST",
+      headers: {
+        pinata_api_key: config.pinataApiKey,
+        pinata_secret_api_key: config.pinataSecretKey,
+      },
+      body: formData,
+      signal: controller.signal,
+    });
 
-  const data: PinataResponse = await response.json();
-  const ipfsUrl = `ipfs://${data.IpfsHash}`;
-  
-  console.log(`✅ Image uploaded: ${ipfsUrl}`);
-  return ipfsUrl;
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Pinata upload failed: ${error.substring(0, 200)}`);
+    }
+
+    const data: PinataResponse = await response.json();
+    const ipfsUrl = `ipfs://${data.IpfsHash}`;
+    
+    console.log(`✅ Image uploaded: ${ipfsUrl}`);
+    return ipfsUrl;
+  }, 3, 10000, "Pinata image upload");
 }
 
 // ============================================
@@ -75,35 +109,43 @@ export async function uploadMetadataToIPFS(
 ): Promise<string> {
   console.log("📤 Uploading metadata to IPFS...");
 
-  const response = await fetch(`${PINATA_API_URL}/pinning/pinJSONToIPFS`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      pinata_api_key: config.pinataApiKey,
-      pinata_secret_api_key: config.pinataSecretKey,
-    },
-    body: JSON.stringify({
-      pinataContent: metadata,
-      pinataMetadata: {
-        name: fileName,
-        keyvalues: {
-          project: "PixelOracle",
-          type: "metadata",
-        },
+  return withRetry(async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 1 min timeout
+
+    const response = await fetch(`${PINATA_API_URL}/pinning/pinJSONToIPFS`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        pinata_api_key: config.pinataApiKey,
+        pinata_secret_api_key: config.pinataSecretKey,
       },
-    }),
-  });
+      body: JSON.stringify({
+        pinataContent: metadata,
+        pinataMetadata: {
+          name: fileName,
+          keyvalues: {
+            project: "PixelOracle",
+            type: "metadata",
+          },
+        },
+      }),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Pinata metadata upload failed: ${error}`);
-  }
+    clearTimeout(timeoutId);
 
-  const data: PinataResponse = await response.json();
-  const ipfsUrl = `ipfs://${data.IpfsHash}`;
-  
-  console.log(`✅ Metadata uploaded: ${ipfsUrl}`);
-  return ipfsUrl;
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Pinata metadata upload failed: ${error.substring(0, 200)}`);
+    }
+
+    const data: PinataResponse = await response.json();
+    const ipfsUrl = `ipfs://${data.IpfsHash}`;
+    
+    console.log(`✅ Metadata uploaded: ${ipfsUrl}`);
+    return ipfsUrl;
+  }, 3, 5000, "Pinata metadata upload");
 }
 
 // ============================================

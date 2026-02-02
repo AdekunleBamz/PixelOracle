@@ -1,4 +1,4 @@
-import { config } from "./config.js";
+import { config, account } from "./config.js";
 import {
   generateArtPrompt,
   generateImage,
@@ -11,11 +11,18 @@ import {
   getBaseScanUrl,
   getOpenSeaUrl,
   checkBalance,
+  getWalletBalance,
+  emitHeartbeat,
 } from "./services/blockchain.js";
 import {
   postToAllPlatforms,
   formatSocialPost,
 } from "./services/social.js";
+import {
+  startMintListener,
+  startMentionListener,
+  stopListeners,
+} from "./services/interactions.js";
 import http from "http";
 
 // ============================================
@@ -34,32 +41,122 @@ console.log(`
 `);
 
 // ============================================
-// Keep-Alive HTTP Server (for Render free tier)
+// Agent State (for /status endpoint)
+// ============================================
+
+interface AgentState {
+  status: "idle" | "creating" | "minting" | "posting";
+  lastCycleTime: Date;
+  nextScheduledCycle: Date;
+  totalMinted: number;
+  lastMintTx: string | null;
+  lastMintTokenId: number | null;
+  lastHeartbeatTx: string | null;
+  cycleCount: number;
+  errors: Array<{ time: string; message: string }>;
+  walletBalance: string;
+  contractAddress: string;
+  network: string;
+}
+
+const agentState: AgentState = {
+  status: "idle",
+  lastCycleTime: new Date(),
+  nextScheduledCycle: new Date(Date.now() + config.creationIntervalMinutes * 60 * 1000),
+  totalMinted: 0,
+  lastMintTx: null,
+  lastMintTokenId: null,
+  lastHeartbeatTx: null,
+  cycleCount: 0,
+  errors: [],
+  walletBalance: "0",
+  contractAddress: config.contractAddress || "",
+  network: config.network,
+};
+
+// ============================================
+// Enhanced HTTP Server with /status endpoint
 // ============================================
 
 const PORT = process.env.PORT || 3000;
-let lastCycleTime = new Date();
-let totalMinted = 0;
 
 function startKeepAliveServer() {
-  const server = http.createServer((req, res) => {
+  const server = http.createServer(async (req, res) => {
+    // CORS headers for public access
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Content-Type", "application/json");
+
     if (req.url === "/health" || req.url === "/") {
-      res.writeHead(200, { "Content-Type": "application/json" });
+      res.writeHead(200);
       res.end(JSON.stringify({
         status: "alive",
         agent: "PixelOracle",
-        lastCycle: lastCycleTime.toISOString(),
-        totalMinted: totalMinted,
+        version: "1.0.0",
         uptime: process.uptime(),
+      }));
+    } else if (req.url === "/status") {
+      // Full status endpoint - proves autonomy!
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        agent: "🔮 PixelOracle - Autonomous AI Artist",
+        description: "AI agent that autonomously converts computation → culture → onchain provenance",
+        status: agentState.status,
+        autonomous: true,
+        humanInLoop: false,
+        
+        // Timing proof
+        lastCycleTime: agentState.lastCycleTime.toISOString(),
+        nextScheduledCycle: agentState.nextScheduledCycle.toISOString(),
+        intervalMinutes: config.creationIntervalMinutes,
+        
+        // Onchain proof
+        lastMintTx: agentState.lastMintTx,
+        lastMintTxUrl: agentState.lastMintTx ? getBaseScanUrl(agentState.lastMintTx) : null,
+        lastMintTokenId: agentState.lastMintTokenId,
+        lastHeartbeatTx: agentState.lastHeartbeatTx,
+        totalMinted: agentState.totalMinted,
+        
+        // Contract info
+        contract: agentState.contractAddress,
+        contractUrl: `https://basescan.org/address/${agentState.contractAddress}`,
+        network: agentState.network,
+        walletBalance: agentState.walletBalance,
+        
+        // Stats
+        cycleCount: agentState.cycleCount,
+        uptime: process.uptime(),
+        uptimeHuman: formatUptime(process.uptime()),
+        
+        // Social links
+        links: {
+          basescan: `https://basescan.org/address/${agentState.contractAddress}`,
+          opensea: `https://opensea.io/collection/pixeloracle`,
+        },
+        
+        // Recent errors (for debugging)
+        recentErrors: agentState.errors.slice(-3),
+      }));
+    } else if (req.url === "/proof") {
+      // Minimal proof endpoint for quick verification
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        alive: true,
+        autonomous: true,
+        lastMintTx: agentState.lastMintTx,
+        nextMint: agentState.nextScheduledCycle.toISOString(),
+        contract: agentState.contractAddress,
       }));
     } else {
       res.writeHead(404);
-      res.end("Not found");
+      res.end(JSON.stringify({ error: "Not found", endpoints: ["/", "/health", "/status", "/proof"] }));
     }
   });
 
   server.listen(PORT, () => {
-    console.log(`🌐 Keep-alive server running on port ${PORT}`);
+    console.log(`🌐 Status server running on port ${PORT}`);
+    console.log(`   📊 /status - Full agent status (proves autonomy)`);
+    console.log(`   💓 /health - Health check`);
+    console.log(`   🔍 /proof  - Minimal proof endpoint`);
   });
 
   // Self-ping every 10 minutes to prevent Render from sleeping
@@ -77,6 +174,22 @@ function startKeepAliveServer() {
   }
 }
 
+function formatUptime(seconds: number): string {
+  const days = Math.floor(seconds / 86400);
+  const hours = Math.floor((seconds % 86400) / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${days}d ${hours}h ${minutes}m`;
+}
+
+// Update wallet balance in state
+async function updateWalletBalance() {
+  try {
+    agentState.walletBalance = await getWalletBalance();
+  } catch (e) {
+    // ignore
+  }
+}
+
 // ============================================
 // Main Creation Cycle
 // ============================================
@@ -84,13 +197,20 @@ function startKeepAliveServer() {
 async function createArtworkCycle(): Promise<void> {
   console.log("\n🎨 Starting new artwork creation cycle...\n");
   console.log("=".repeat(50));
-  lastCycleTime = new Date();
+  
+  agentState.status = "creating";
+  agentState.lastCycleTime = new Date();
+  agentState.cycleCount++;
 
   try {
+    // Update balance
+    await updateWalletBalance();
+    
     // Step 0: Check balance
     const hasBalance = await checkBalance();
     if (!hasBalance) {
       console.log("⏸️ Pausing due to low balance");
+      agentState.status = "idle";
       return;
     }
 
@@ -121,14 +241,21 @@ async function createArtworkCycle(): Promise<void> {
     );
 
     // Step 5: Mint NFT
+    agentState.status = "minting";
     console.log("\n⛓️ Step 4: Minting on Base...");
     const { tokenId: mintedId, txHash } = await mintArtwork(
       metadataUri,
       artConcept.prompt,
       artConcept.theme
     );
+    
+    // Update state with mint info
+    agentState.lastMintTx = txHash;
+    agentState.lastMintTokenId = Number(mintedId);
+    agentState.totalMinted = Number(await getTotalMinted());
 
     // Step 6: Generate social post
+    agentState.status = "posting";
     console.log("\n✍️ Step 5: Generating social post...");
     const oracleMessage = await generateOracleMessage(
       artConcept.theme,
@@ -148,6 +275,7 @@ async function createArtworkCycle(): Promise<void> {
     );
 
     // Summary
+    agentState.status = "idle";
     console.log("\n" + "=".repeat(50));
     console.log("✅ ARTWORK CREATION COMPLETE!");
     console.log("=".repeat(50));
@@ -160,9 +288,33 @@ async function createArtworkCycle(): Promise<void> {
     console.log(`   🐦 Twitter: ${socialResults.twitter.success ? "✅" : "❌"}`);
     console.log("=".repeat(50) + "\n");
 
+    // Emit heartbeat with stats every 5 cycles (on-chain proof of autonomy)
+    if (agentState.cycleCount > 0 && agentState.cycleCount % 5 === 0) {
+      console.log("\n💓 Milestone reached! Emitting on-chain heartbeat with stats...");
+      const heartbeatTx = await emitHeartbeat({
+        cycleCount: agentState.cycleCount,
+        totalMinted: agentState.totalMinted,
+        uptimeSeconds: Math.floor(process.uptime()),
+      });
+      if (heartbeatTx) {
+        agentState.lastHeartbeatTx = heartbeatTx;
+        console.log(`   ✅ Heartbeat recorded: ${getBaseScanUrl(heartbeatTx)}\n`);
+      }
+    }
+
   } catch (error: any) {
     console.error("\n❌ Error in creation cycle:", error.message);
     console.error(error.stack);
+    // Track error in state
+    agentState.errors.push({
+      time: new Date().toISOString(),
+      message: error.message,
+    });
+    // Keep only last 10 errors
+    if (agentState.errors.length > 10) {
+      agentState.errors = agentState.errors.slice(-10);
+    }
+    agentState.status = "idle";
   }
 }
 
@@ -176,13 +328,20 @@ async function runAutonomousLoop(): Promise<void> {
   console.log(`🔄 Autonomous mode: Creating art every ${config.creationIntervalMinutes} minutes`);
   console.log(`   Press Ctrl+C to stop\n`);
 
+  // Update next scheduled cycle time
+  const updateNextCycle = () => {
+    agentState.nextScheduledCycle = new Date(Date.now() + intervalMs);
+  };
+
   // Run first cycle immediately
   await createArtworkCycle();
+  updateNextCycle();
 
   // Schedule subsequent cycles
   setInterval(async () => {
     console.log(`\n⏰ Time for a new creation...`);
     await createArtworkCycle();
+    updateNextCycle();
   }, intervalMs);
 }
 
@@ -196,19 +355,33 @@ async function main(): Promise<void> {
   // Start keep-alive server for Render
   startKeepAliveServer();
 
-  if (args.includes("--once")) {
-    // Single creation mode
-    console.log("🎯 Running single creation cycle...\n");
+  // NOTE: --debug-create is for local testing/debugging only.
+  // Competition/production deployment uses autonomous mode (default).
+  // The agent runs 24/7 without human intervention in autonomous mode.
+  if (args.includes("--debug-create") || args.includes("--once")) {
+    // Debug mode - single creation for testing
+    console.log("🔧 DEBUG MODE: Running single creation cycle...\n");
+    console.log("⚠️  For autonomous operation, run without --debug-create\n");
     await createArtworkCycle();
-    // Don't exit - keep server running
+    // Don't exit - keep server running for /status endpoint
   } else {
-    // Autonomous loop mode
+    // AUTONOMOUS MODE - This is how the agent runs in production
+    // No human in the loop - pure autonomous operation
+    console.log("🚀 AUTONOMOUS MODE - No human intervention required\n");
+    
+    // Start interaction listeners (thank collectors, reply to mentions)
+    if (config.contractAddress) {
+      await startMintListener(account.address, config.contractAddress);
+    }
+    await startMentionListener();
+    
     await runAutonomousLoop();
   }
 }
 
 // Handle graceful shutdown
 process.on("SIGINT", () => {
+  stopListeners();
   console.log("\n\n👋 PixelOracle signing off... Until next time!");
   process.exit(0);
 });

@@ -96,19 +96,13 @@ export async function postToTwitter(
       accessSecret: config.twitterAccessSecret,
     });
 
-    let mediaId: string | undefined;
+    // Note: Media upload requires Basic tier ($200/month)
+    // Free tier only supports text tweets, so we skip image upload
+    // The IPFS image link is included in the text anyway
 
-    // Upload image if provided
-    if (imageBuffer) {
-      mediaId = await client.v1.uploadMedia(imageBuffer, {
-        mimeType: "image/png",
-      });
-    }
-
-    // Post tweet
+    // Post tweet (text only on free tier)
     const tweet = await client.v2.tweet({
       text: text,
-      media: mediaId ? { media_ids: [mediaId] } : undefined,
     });
 
     console.log(`✅ Posted to Twitter: ${tweet.data.id}`);
@@ -157,7 +151,8 @@ export function formatSocialPost(
   openSeaUrl: string
 ): string {
   // Keep under 280 chars for Twitter compatibility
-  const links = `\n\n🔗 ${baseScanUrl}`;
+  // Include both BaseScan tx link and OpenSea NFT link
+  const links = `\n\n⛓️ ${baseScanUrl}\n🖼️ ${openSeaUrl}`;
   const maxMessageLength = 280 - links.length - 10;
   
   let truncatedMessage = message;

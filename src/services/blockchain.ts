@@ -128,3 +128,53 @@ export async function checkBalance(): Promise<boolean> {
   console.log(`💰 Wallet balance: ${balance} ETH`);
   return true;
 }
+
+// ============================================
+// Heartbeat Function (proves autonomy onchain)
+// ============================================
+
+interface HeartbeatStats {
+  cycleCount: number;
+  totalMinted: number;
+  uptimeSeconds: number;
+}
+
+export async function emitHeartbeat(stats?: HeartbeatStats): Promise<string | null> {
+  try {
+    console.log("💓 Emitting onchain heartbeat...");
+    
+    // Create heartbeat data with stats if provided
+    const heartbeatData = stats 
+      ? JSON.stringify({
+          type: "pixeloracle-heartbeat",
+          version: "1.0.0",
+          cycles: stats.cycleCount,
+          minted: stats.totalMinted,
+          uptime: stats.uptimeSeconds,
+          ts: Date.now()
+        })
+      : "PixelOracle heartbeat - autonomous agent alive";
+    
+    // Simple self-transfer of 0 ETH to create onchain proof of life
+    const hash = await walletClient.sendTransaction({
+      account,
+      chain,
+      to: account.address,
+      value: BigInt(0),
+      data: "0x" + Buffer.from(heartbeatData).toString("hex") as `0x${string}`,
+    });
+
+    console.log(`💓 Heartbeat tx: ${hash}`);
+    if (stats) {
+      console.log(`   📊 Stats: ${stats.cycleCount} cycles, ${stats.totalMinted} minted`);
+    }
+    
+    // Wait for confirmation
+    await publicClient.waitForTransactionReceipt({ hash });
+    
+    return hash;
+  } catch (error: any) {
+    console.error(`❌ Heartbeat failed: ${error.message}`);
+    return null;
+  }
+}

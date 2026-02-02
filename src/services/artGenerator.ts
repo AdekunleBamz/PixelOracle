@@ -3,6 +3,8 @@ import { config } from "../config.js";
 
 const openai = new OpenAI({
   apiKey: config.openaiApiKey,
+  timeout: 120000, // 2 minute timeout for DALL-E
+  maxRetries: 2,
 });
 
 // ============================================
@@ -86,30 +88,49 @@ Respond with JSON only:
 // Image Generation
 // ============================================
 
-export async function generateImage(prompt: string): Promise<Buffer> {
+export async function generateImage(prompt: string, retries = 2): Promise<Buffer> {
   console.log("🎨 Generating image with DALL-E...");
   console.log(`   Prompt: ${prompt.substring(0, 100)}...`);
 
-  const response = await openai.images.generate({
-    model: "dall-e-3",
-    prompt: `${prompt}. High quality digital art, 4K resolution, detailed, professional artwork.`,
-    n: 1,
-    size: "1024x1024",
-    quality: "hd",
-    style: "vivid",
-  });
+  for (let attempt = 1; attempt <= retries + 1; attempt++) {
+    try {
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: `${prompt}. High quality digital art, 4K resolution, detailed, professional artwork.`,
+        n: 1,
+        size: "1024x1024",
+        quality: "hd",
+        style: "vivid",
+      });
 
-  if (!response.data || !response.data[0]?.url) {
-    throw new Error("No image URL returned from DALL-E");
+      if (!response.data || !response.data[0]?.url) {
+        throw new Error("No image URL returned from DALL-E");
+      }
+      const imageUrl = response.data[0].url;
+
+      // Download the image with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for download
+      
+      const imageResponse = await fetch(imageUrl, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      
+      const arrayBuffer = await imageResponse.arrayBuffer();
+      
+      console.log("✅ Image generated successfully");
+      return Buffer.from(arrayBuffer);
+    } catch (error: any) {
+      console.log(`   ⚠️ Attempt ${attempt} failed: ${error.message}`);
+      if (attempt <= retries) {
+        console.log(`   🔄 Retrying in 5 seconds...`);
+        await new Promise(r => setTimeout(r, 5000));
+      } else {
+        throw error;
+      }
+    }
   }
-  const imageUrl = response.data[0].url;
-
-  // Download the image
-  const imageResponse = await fetch(imageUrl);
-  const arrayBuffer = await imageResponse.arrayBuffer();
   
-  console.log("✅ Image generated successfully");
-  return Buffer.from(arrayBuffer);
+  throw new Error("Image generation failed after all retries");
 }
 
 // ============================================

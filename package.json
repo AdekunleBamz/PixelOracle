@@ -9,6 +9,8 @@
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts",
     "agent": "tsx src/agent.ts",
+    "auto": "tsx src/agent.ts",
+    "debug-create": "tsx src/agent.ts --debug-create",
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.ts --network base",
     "deploy:testnet": "hardhat run scripts/deploy.ts --network baseSepolia",
