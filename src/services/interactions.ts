@@ -45,8 +45,17 @@ export async function startMintListener(
   agentAddress: string,
   contractAddress: `0x${string}`
 ): Promise<void> {
-  console.log("👂 Starting mint listener for collector thank-yous...");
+  console.log("👂 Mint listener for collector thank-yous...");
+  
+  // Note: Disabled due to public RPC limitations with event filters
+  // The free Base RPC doesn't support eth_newFilter/eth_getFilterChanges reliably
+  // To enable: use a paid RPC like Alchemy or Infura that supports WebSocket/filters
+  console.log("   ⚠️ Mint listener disabled (public RPC doesn't support filters)");
+  console.log("   💡 Tip: Use Alchemy/Infura RPC to enable this feature");
+  return;
 
+  // Original code kept for reference - uncomment with a proper RPC:
+  /*
   // Watch for ArtworkCreated events
   publicClient.watchContractEvent({
     address: contractAddress,
@@ -78,7 +87,7 @@ export async function startMintListener(
         console.log(`   Collector: ${creator}`);
 
         // Generate thank you message
-        await thankCollector(creator, tokenId, log.transactionHash || "");
+        await thankCollector(collector, tokenId, log.transactionHash || "");
       }
     },
     onError: (error) => {
@@ -87,6 +96,7 @@ export async function startMintListener(
   });
 
   console.log("   ✅ Mint listener active");
+  */
 }
 
 // ============================================
