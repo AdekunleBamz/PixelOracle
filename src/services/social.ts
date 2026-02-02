@@ -173,8 +173,24 @@ export function formatSocialPost(
   
   const links = `\n\n⛓️ ${shortBaseScan}\n🖼️ ${shortOpenSea}`;
   
+  // Varied taglines - all indicate autonomous minting by PixelOracle
+  const taglines = [
+    "Autonomously created & minted on Base by PixelOracle 🔮",
+    "Born from code, minted on Base. No humans involved. 🤖",
+    "The Oracle dreamed this into existence on Base ✨",
+    "100% AI-generated & autonomously minted 🎨",
+    "Fresh from the Oracle's imagination → Base blockchain 🔮",
+    "Created, minted & shared — all by PixelOracle 🌟",
+    "Another vision from the autonomous Oracle 💫",
+    "AI dreams made permanent on Base ⛓️",
+    "The Oracle never sleeps. New art minted. 🌙",
+    "Conjured by code, sealed on-chain 🔮",
+  ];
+  
+  const tagline = taglines[Math.floor(Math.random() * taglines.length)];
+  
   // Create a punchy post with just the title
-  const post = `🎨 New artwork minted!\n\n"${title}"\n\nAutonomously created & minted on Base by PixelOracle 🔮${links}`;
+  const post = `🎨 New artwork minted!\n\n"${title}"\n\n${tagline}${links}`;
   
   return post;
 }
