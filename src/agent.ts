@@ -87,12 +87,21 @@ function startKeepAliveServer() {
     res.setHeader("Content-Type", "application/json");
 
     if (req.url === "/health" || req.url === "/") {
+      const now = new Date();
+      const nextCycle = agentState.nextScheduledCycle;
+      const timeUntilNext = Math.max(0, nextCycle.getTime() - now.getTime());
+      const minutesUntilNext = Math.floor(timeUntilNext / 60000);
+      const secondsUntilNext = Math.floor((timeUntilNext % 60000) / 1000);
+      
       res.writeHead(200);
       res.end(JSON.stringify({
-        status: "alive",
-        agent: "PixelOracle",
-        version: "1.0.0",
-        uptime: process.uptime(),
+        agent: "🔮 PixelOracle",
+        status: agentState.status,
+        totalMinted: agentState.totalMinted,
+        lastMintTime: agentState.lastCycleTime.toISOString(),
+        nextMintIn: `${minutesUntilNext}m ${secondsUntilNext}s`,
+        nextMintAt: nextCycle.toISOString(),
+        uptime: formatUptime(process.uptime()),
       }));
     } else if (req.url === "/status") {
       // Full status endpoint - proves autonomy!
