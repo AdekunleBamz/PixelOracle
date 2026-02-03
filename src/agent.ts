@@ -123,7 +123,7 @@ function startKeepAliveServer() {
         lastCycleRan: agentState.lastCycleTime.toISOString(),
         lastCycleAgo: formatUptime((now.getTime() - agentState.lastCycleTime.getTime()) / 1000) + " ago",
         nextMintIn: `${minutesUntilNext}m ${secondsUntilNext}s`,
-        nextMintAt: nextScheduledCycle.toISOString(),
+        nextMintAt: nextCycle.toISOString(),
         mintIntervalMinutes: config.creationIntervalMinutes,
         
         // Artwork stats
