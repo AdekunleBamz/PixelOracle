@@ -87,104 +87,77 @@ function startKeepAliveServer() {
     res.setHeader("Content-Type", "application/json");
 
     if (req.url === "/health" || req.url === "/") {
-      try {
-        const now = new Date();
-        const nextCycle = agentState.nextScheduledCycle;
-        const timeUntilNext = Math.max(0, nextCycle.getTime() - now.getTime());
-        const minutesUntilNext = Math.floor(timeUntilNext / 60000);
-        const secondsUntilNext = Math.floor((timeUntilNext % 60000) / 1000);
-        
-        // Fetch LIVE data from blockchain
-        const [liveBalance, liveTotalMinted] = await Promise.all([
-          getWalletBalance(),
-          getTotalMinted(),
-        ]);
-        
-        res.writeHead(200);
-        res.end(JSON.stringify({
-          agent: "PixelOracle",
-          status: agentState.status,
-          totalMinted: liveTotalMinted,
-          walletBalance: liveBalance,
-          lastMintTime: agentState.lastCycleTime.toISOString(),
-          nextMintIn: `${minutesUntilNext}m ${secondsUntilNext}s`,
-          nextMintAt: nextCycle.toISOString(),
-          uptime: formatUptime(process.uptime()),
-        }));
-      } catch (error) {
-        res.writeHead(200);
-        res.end(JSON.stringify({
-          agent: "PixelOracle",
-          status: agentState.status,
-          error: "Could not fetch live blockchain data",
-          uptime: formatUptime(process.uptime()),
-        }));
-      }
+      const now = new Date();
+      const nextCycle = agentState.nextScheduledCycle;
+      const timeUntilNext = Math.max(0, nextCycle.getTime() - now.getTime());
+      const minutesUntilNext = Math.floor(timeUntilNext / 60000);
+      const secondsUntilNext = Math.floor((timeUntilNext % 60000) / 1000);
+      
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        agent: "PixelOracle",
+        status: agentState.status,
+        totalMinted: agentState.totalMinted,
+        walletBalance: agentState.walletBalance,
+        lastMintTime: agentState.lastCycleTime.toISOString(),
+        nextMintIn: `${minutesUntilNext}m ${secondsUntilNext}s`,
+        nextMintAt: nextCycle.toISOString(),
+        uptime: formatUptime(process.uptime()),
+      }));
     } else if (req.url === "/status") {
-      // Full status endpoint - LIVE DATA from blockchain
-      try {
-        const now = new Date();
-        const nextCycle = agentState.nextScheduledCycle;
-        const timeUntilNext = Math.max(0, nextCycle.getTime() - now.getTime());
-        const minutesUntilNext = Math.floor(timeUntilNext / 60000);
-        const secondsUntilNext = Math.floor((timeUntilNext % 60000) / 1000);
+      // Full status endpoint - instant response from cached state
+      const now = new Date();
+      const nextCycle = agentState.nextScheduledCycle;
+      const timeUntilNext = Math.max(0, nextCycle.getTime() - now.getTime());
+      const minutesUntilNext = Math.floor(timeUntilNext / 60000);
+      const secondsUntilNext = Math.floor((timeUntilNext % 60000) / 1000);
+      
+      res.writeHead(200);
+      res.end(JSON.stringify({
+        agent: "PixelOracle - Autonomous AI Artist",
+        description: "AI agent that autonomously converts computation into culture into onchain provenance",
+        status: agentState.status,
+        autonomous: true,
+        humanInLoop: false,
         
-        // Fetch LIVE data from blockchain
-        const [liveBalance, liveTotalMinted] = await Promise.all([
-          getWalletBalance(),
-          getTotalMinted(),
-        ]);
+        // Human-readable timing
+        lastCycleRan: agentState.lastCycleTime.toISOString(),
+        lastCycleAgo: formatUptime((now.getTime() - agentState.lastCycleTime.getTime()) / 1000) + " ago",
+        nextMintIn: `${minutesUntilNext}m ${secondsUntilNext}s`,
+        nextMintAt: nextCycle.toISOString(),
+        mintIntervalMinutes: config.creationIntervalMinutes,
         
-        res.writeHead(200);
-        res.end(JSON.stringify({
-          agent: "PixelOracle - Autonomous AI Artist",
-          description: "AI agent that autonomously converts computation into culture into onchain provenance",
-          status: agentState.status,
-          autonomous: true,
-          humanInLoop: false,
+        // Artwork stats from cached state
+        totalArtworksMinted: agentState.totalMinted,
+        cyclesCompleted: agentState.cycleCount,
+        
+        // Last mint details
+        lastMint: {
+          tokenId: agentState.lastMintTokenId,
+          txHash: agentState.lastMintTx,
+          viewOnBasescan: agentState.lastMintTx ? getBaseScanUrl(agentState.lastMintTx) : null,
+          viewOnOpensea: agentState.lastMintTokenId ? `https://opensea.io/assets/base/${agentState.contractAddress}/${agentState.lastMintTokenId}` : null,
+        },
+        
+        // Contract info
+        contract: agentState.contractAddress,
+        contractUrl: `https://basescan.org/address/${agentState.contractAddress}`,
+        network: agentState.network,
+        walletBalance: agentState.walletBalance,
+        
+        // Uptime
+        uptime: formatUptime(process.uptime()),
+        
+        // Social links
+        links: {
+          farcaster: "https://warpcast.com/pixel-oracle",
+          opensea: "https://opensea.io/collection/pixeloracle",
+          basescan: `https://basescan.org/address/${agentState.contractAddress}`,
+        },
           
-          // Human-readable timing
-          lastCycleRan: agentState.lastCycleTime.toISOString(),
-          lastCycleAgo: formatUptime((now.getTime() - agentState.lastCycleTime.getTime()) / 1000) + " ago",
-          nextMintIn: `${minutesUntilNext}m ${secondsUntilNext}s`,
-          nextMintAt: nextCycle.toISOString(),
-          mintIntervalMinutes: config.creationIntervalMinutes,
-          
-          // LIVE artwork stats from blockchain
-          totalArtworksMinted: liveTotalMinted,
-          cyclesCompleted: agentState.cycleCount,
-          
-          // Last mint details
-          lastMint: {
-            tokenId: agentState.lastMintTokenId,
-            txHash: agentState.lastMintTx,
-            viewOnBasescan: agentState.lastMintTx ? getBaseScanUrl(agentState.lastMintTx) : null,
-            viewOnOpensea: agentState.lastMintTokenId ? `https://opensea.io/assets/base/${agentState.contractAddress}/${agentState.lastMintTokenId}` : null,
-          },
-          
-          // Contract info
-          contract: agentState.contractAddress,
-          contractUrl: `https://basescan.org/address/${agentState.contractAddress}`,
-          network: agentState.network,
-          walletBalance: liveBalance,
-          
-          // Uptime
-          uptime: formatUptime(process.uptime()),
-          
-          // Social links
-          links: {
-            farcaster: "https://warpcast.com/pixel-oracle",
-            opensea: "https://opensea.io/collection/pixeloracle",
-            basescan: `https://basescan.org/address/${agentState.contractAddress}`,
-          },
-          
-          // Recent errors (for debugging)
-          recentErrors: agentState.errors.slice(-3),
-        }));
-      } catch (error) {
-        res.writeHead(500);
-        res.end(JSON.stringify({ error: "Failed to fetch live data", message: String(error) }));
-      }
+        // Recent errors (for debugging)
+        recentErrors: agentState.errors.slice(-3),
+      }));
     } else if (req.url === "/proof") {
       // Minimal proof endpoint for quick verification
       res.writeHead(200);
