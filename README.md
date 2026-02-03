@@ -6,7 +6,7 @@
 
 PixelOracle is a fully autonomous AI agent that creates, mints, and shares unique digital artworks on the Base blockchain. No human in the loop - just pure autonomous creativity.
 
-![PixelOracle Banner](https://via.placeholder.com/800x400/1a1a2e/eee?text=PixelOracle+%E2%9C%A8)
+![PixelOracle Banner](https://coffee-mean-rooster-421.mypinata.cloud/ipfs/Qma9s8iD4PnWAiqPvv4Zw1amVeUnmEPtKUgAE7FViQgbnQ)
 
 ## 🎯 Why PixelOracle?
 
