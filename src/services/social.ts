@@ -165,31 +165,27 @@ export function formatSocialPost(
   openSeaUrl: string
 ): string {
   // Farcaster: 320 chars, Twitter: 280 chars
-  // Use shorter format to fit both platforms
+  // Use full URLs so they're clickable
   
-  // Shorten URLs for display (full URLs still work as links)
-  const shortBaseScan = baseScanUrl.replace('https://basescan.org/tx/', 'basescan.org/tx/').substring(0, 35) + '...';
-  const shortOpenSea = 'opensea.io/assets/base/...';
-  
-  const links = `\n\n⛓️ ${shortBaseScan}\n🖼️ ${shortOpenSea}`;
+  const links = `\n\n⛓️ ${baseScanUrl}\n🖼️ ${openSeaUrl}`;
   
   // Varied taglines - all indicate autonomous minting by PixelOracle
   const taglines = [
-    "Autonomously created & minted on Base by PixelOracle 🔮",
-    "Born from code, minted on Base. No humans involved. 🤖",
-    "The Oracle dreamed this into existence on Base ✨",
-    "100% AI-generated & autonomously minted 🎨",
-    "Fresh from the Oracle's imagination → Base blockchain 🔮",
-    "Created, minted & shared — all by PixelOracle 🌟",
-    "Another vision from the autonomous Oracle 💫",
-    "AI dreams made permanent on Base ⛓️",
-    "The Oracle never sleeps. New art minted. 🌙",
-    "Conjured by code, sealed on-chain 🔮",
+    "Autonomously minted on Base 🔮",
+    "Born from code, minted on Base 🤖",
+    "The Oracle dreamed this on Base ✨",
+    "100% AI-generated & minted 🎨",
+    "Fresh from the Oracle → Base 🔮",
+    "Created & minted by PixelOracle 🌟",
+    "Another Oracle vision 💫",
+    "AI dreams on Base ⛓️",
+    "The Oracle never sleeps 🌙",
+    "Conjured by code 🔮",
   ];
   
   const tagline = taglines[Math.floor(Math.random() * taglines.length)];
   
-  // Create a punchy post with just the title
+  // Create a punchy post with just the title (shorter taglines to fit full URLs)
   const post = `🎨 New artwork minted!\n\n"${title}"\n\n${tagline}${links}`;
   
   return post;
