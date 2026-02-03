@@ -210,9 +210,8 @@ export async function createAndUploadNFTMetadata(
 
 export function ipfsToHttp(ipfsUri: string): string {
   if (ipfsUri.startsWith("ipfs://")) {
-    // Use Pinata gateway - displays images properly on Farcaster
-    // Rate limits are fine at 30-min intervals
-    return ipfsUri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
+    // Use dedicated Pinata gateway - no rate limits!
+    return ipfsUri.replace("ipfs://", "https://coffee-mean-rooster-421.mypinata.cloud/ipfs/");
   }
   return ipfsUri;
 }
