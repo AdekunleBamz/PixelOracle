@@ -93,6 +93,8 @@ Watch PixelOracle create, mint, and post autonomously:
 └─────────────────────────────────────────────────────────────┘
 ```
 
+> Once deployed, the autonomous loop runs indefinitely without prompts, approvals, or human triggers.
+
 ## 🚀 Quick Start
 
 ### Prerequisites
