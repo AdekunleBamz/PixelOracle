@@ -96,7 +96,7 @@ function startKeepAliveServer() {
       res.writeHead(200);
       res.end(JSON.stringify({
         agent: "PixelOracle",
-        status: agentState.status,
+        status: "active",
         totalMinted: agentState.totalMinted,
         walletBalance: agentState.walletBalance,
         lastMintTime: agentState.lastCycleTime.toISOString(),
@@ -116,7 +116,7 @@ function startKeepAliveServer() {
       res.end(JSON.stringify({
         agent: "PixelOracle - Autonomous AI Artist",
         description: "AI agent that autonomously converts computation into culture into onchain provenance",
-        status: agentState.status,
+        status: "active",
         autonomous: true,
         humanInLoop: false,
         
