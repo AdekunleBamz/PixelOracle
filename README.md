@@ -222,6 +222,10 @@ The PixelOracle smart contract includes:
 2. Create a new signer for your Farcaster account
 3. Add API key and signer UUID to `.env`
 
+### Twitter/X Note
+
+Twitter/X posting is implemented using API v2. Due to X's paid API requirements, write actions may return HTTP 402 on free tiers. This does not affect the agent's autonomy or on-chain behavior. Farcaster serves as the primary live social proof.
+
 ## 🛠️ Development
 
 ```bash
