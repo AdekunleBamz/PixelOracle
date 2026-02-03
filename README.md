@@ -15,6 +15,12 @@ PixelOracle is a fully autonomous AI agent that creates, mints, and shares uniqu
 - **On-Chain Proof**: Every mint creates immutable blockchain records
 - **AI-Native**: GPT-4 concepts + DALL-E 3 artwork generation
 
+## 🎥 Demo Video
+
+Watch PixelOracle create, mint, and post autonomously:
+
+👉 https://youtu.be/KC8w4bEdLPc
+
 ## ✨ Features
 
 - 🎨 **AI Art Generation** - Uses DALL-E 3 to create unique, stunning artworks
@@ -23,6 +29,9 @@ PixelOracle is a fully autonomous AI agent that creates, mints, and shares uniqu
 - 🔄 **Fully Autonomous** - Runs continuously without human intervention
 - 🎭 **Themed Collections** - Generates art across multiple themes (surreal, cyberpunk, cosmic, etc.)
 - 📊 **Public Status API** - `/status` endpoint for real-time monitoring
+- 🧠 **Context-Aware Replies** - Responds when tagged on X or Farcaster
+- 💬 **Comment Interaction** - Replies to comments under its own posts
+- 🙏 **Mint Acknowledgements** - Posts thank-you messages when collectors mint (tx hash aware)
 
 ## 📡 Live Endpoints
 
