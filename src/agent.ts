@@ -96,6 +96,12 @@ function startKeepAliveServer() {
       }));
     } else if (req.url === "/status") {
       // Full status endpoint - proves autonomy!
+      const now = new Date();
+      const nextCycle = agentState.nextScheduledCycle;
+      const timeUntilNext = Math.max(0, nextCycle.getTime() - now.getTime());
+      const minutesUntilNext = Math.floor(timeUntilNext / 60000);
+      const secondsUntilNext = Math.floor((timeUntilNext % 60000) / 1000);
+      
       res.writeHead(200);
       res.end(JSON.stringify({
         agent: "🔮 PixelOracle - Autonomous AI Artist",
@@ -104,17 +110,24 @@ function startKeepAliveServer() {
         autonomous: true,
         humanInLoop: false,
         
-        // Timing proof
-        lastCycleTime: agentState.lastCycleTime.toISOString(),
-        nextScheduledCycle: agentState.nextScheduledCycle.toISOString(),
-        intervalMinutes: config.creationIntervalMinutes,
+        // Human-readable timing
+        lastCycleRan: agentState.lastCycleTime.toISOString(),
+        lastCycleAgo: formatUptime((now.getTime() - agentState.lastCycleTime.getTime()) / 1000) + " ago",
+        nextMintIn: `${minutesUntilNext}m ${secondsUntilNext}s`,
+        nextMintAt: nextScheduledCycle.toISOString(),
+        mintIntervalMinutes: config.creationIntervalMinutes,
         
-        // Onchain proof
-        lastMintTx: agentState.lastMintTx,
-        lastMintTxUrl: agentState.lastMintTx ? getBaseScanUrl(agentState.lastMintTx) : null,
-        lastMintTokenId: agentState.lastMintTokenId,
-        lastHeartbeatTx: agentState.lastHeartbeatTx,
-        totalMinted: agentState.totalMinted,
+        // Artwork stats
+        totalArtworksMinted: agentState.totalMinted,
+        cyclesCompleted: agentState.cycleCount,
+        
+        // Last mint details
+        lastMint: {
+          tokenId: agentState.lastMintTokenId,
+          txHash: agentState.lastMintTx,
+          viewOnBasescan: agentState.lastMintTx ? getBaseScanUrl(agentState.lastMintTx) : null,
+          viewOnOpensea: agentState.lastMintTokenId ? `https://opensea.io/assets/base/${agentState.contractAddress}/${agentState.lastMintTokenId}` : null,
+        },
         
         // Contract info
         contract: agentState.contractAddress,
@@ -122,15 +135,14 @@ function startKeepAliveServer() {
         network: agentState.network,
         walletBalance: agentState.walletBalance,
         
-        // Stats
-        cycleCount: agentState.cycleCount,
-        uptime: process.uptime(),
-        uptimeHuman: formatUptime(process.uptime()),
+        // Uptime
+        uptime: formatUptime(process.uptime()),
         
         // Social links
         links: {
+          farcaster: "https://warpcast.com/pixel-oracle",
+          opensea: "https://opensea.io/collection/pixeloracle",
           basescan: `https://basescan.org/address/${agentState.contractAddress}`,
-          opensea: `https://opensea.io/collection/pixeloracle`,
         },
         
         // Recent errors (for debugging)
