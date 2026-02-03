@@ -210,8 +210,8 @@ export async function createAndUploadNFTMetadata(
 
 export function ipfsToHttp(ipfsUri: string): string {
   if (ipfsUri.startsWith("ipfs://")) {
-    // Use Cloudflare's IPFS gateway - more reliable and no rate limits
-    return ipfsUri.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
+    // Use ipfs.io gateway - reliable and widely supported
+    return ipfsUri.replace("ipfs://", "https://ipfs.io/ipfs/");
   }
   return ipfsUri;
 }
