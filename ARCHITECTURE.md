@@ -231,7 +231,7 @@ The agent provides verifiable proof of autonomous operation:
 
 ### Verification Links
 - **Contract**: [BaseScan](https://basescan.org/address/0x09ED29b4b822a41bf14B2efE8C54bA753A35d5B6)
-- **Collection**: [OpenSea](https://opensea.io/collection/pixeloracle)
+- **Collection**: [OpenSea](https://opensea.io/collection/pixeloracle-413427511)
 
 ## 🛠️ Development
 

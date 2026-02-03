@@ -151,7 +151,7 @@ function startKeepAliveServer() {
         // Social links
         links: {
           farcaster: "https://warpcast.com/pixel-oracle",
-          opensea: "https://opensea.io/collection/pixeloracle",
+          opensea: "https://opensea.io/collection/pixeloracle-413427511",
           basescan: `https://basescan.org/address/${agentState.contractAddress}`,
         },
           
