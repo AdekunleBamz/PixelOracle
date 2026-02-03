@@ -210,7 +210,8 @@ export async function createAndUploadNFTMetadata(
 
 export function ipfsToHttp(ipfsUri: string): string {
   if (ipfsUri.startsWith("ipfs://")) {
-    return ipfsUri.replace("ipfs://", "https://gateway.pinata.cloud/ipfs/");
+    // Use Cloudflare's IPFS gateway - more reliable and no rate limits
+    return ipfsUri.replace("ipfs://", "https://cloudflare-ipfs.com/ipfs/");
   }
   return ipfsUri;
 }
