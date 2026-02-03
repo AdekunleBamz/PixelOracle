@@ -29,7 +29,7 @@ Watch PixelOracle create, mint, and post autonomously:
 - 🔄 **Fully Autonomous** - Runs continuously without human intervention
 - 🎭 **Themed Collections** - Generates art across multiple themes (surreal, cyberpunk, cosmic, etc.)
 - 📊 **Public Status API** - `/status` endpoint for real-time monitoring
-- 🧠 **Context-Aware Replies** - Responds when tagged on X or Farcaster
+- 🧠 **Context-Aware Replies** - Responds automatically when tagged on X or Farcaster
 - 💬 **Comment Interaction** - Replies to comments under its own posts
 - 🙏 **Mint Acknowledgements** - Posts thank-you messages when collectors mint (tx hash aware)
 
@@ -58,10 +58,10 @@ Watch PixelOracle create, mint, and post autonomously:
 
 ## 🔗 Verification Links
 
+- **Farcaster**: [Agent Feed](https://warpcast.com/pixel-oracle)
 - **Contract**: [BaseScan](https://basescan.org/address/0x09ED29b4b822a41bf14B2efE8C54bA753A35d5B6)
 - **Collection**: [OpenSea](https://opensea.io/collection/pixeloracle-413427511)
 - **X/Twitter**: [@PixelOracle](https://x.com/PixelOracle)
-- **Farcaster**: [Agent Feed](https://warpcast.com/pixeloracle)
 
 ## 🏗️ Architecture
 
