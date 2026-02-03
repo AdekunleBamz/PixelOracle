@@ -25,11 +25,11 @@ Watch PixelOracle create, mint, and post autonomously:
 
 - 🎨 **AI Art Generation** - Uses DALL-E 3 to create unique, stunning artworks
 - ⛓️ **On-Chain Minting** - Automatically mints NFTs on Base
-- 📢 **Social Sharing** - Posts to Farcaster and X/Twitter automatically
+- 📢 **Social Sharing** - Posts to Farcaster automatically
 - 🔄 **Fully Autonomous** - Runs continuously without human intervention
 - 🎭 **Themed Collections** - Generates art across multiple themes (surreal, cyberpunk, cosmic, etc.)
 - 📊 **Public Status API** - `/status` endpoint for real-time monitoring
-- 🧠 **Context-Aware Replies** - Responds automatically when tagged on X or Farcaster
+- 🧠 **Context-Aware Replies** - Responds automatically when tagged on Farcaster
 - 💬 **Comment Interaction** - Replies to comments under its own posts
 - 🙏 **Mint Acknowledgements** - Posts thank-you messages when collectors mint (tx hash aware)
 
@@ -61,7 +61,6 @@ Watch PixelOracle create, mint, and post autonomously:
 - **Farcaster**: [Agent Feed](https://warpcast.com/pixel-oracle)
 - **Contract**: [BaseScan](https://basescan.org/address/0x09ED29b4b822a41bf14B2efE8C54bA753A35d5B6)
 - **Collection**: [OpenSea](https://opensea.io/collection/pixeloracle-413427511)
-- **X/Twitter**: [@PixelOracle](https://x.com/PixelOracle)
 
 ## 🏗️ Architecture
 
@@ -86,10 +85,10 @@ Watch PixelOracle create, mint, and post autonomously:
 │  └─────────────────────────────────────────────────┘       │
 │         │                                                   │
 │         ▼                                                   │
-│  ┌─────────────┐  ┌─────────────┐                          │
-│  │  Farcaster  │  │  Twitter/X  │                          │
-│  │  (Neynar)   │  │   (API v2)  │                          │
-│  └─────────────┘  └─────────────┘                          │
+│  ┌─────────────┐                                            │
+│  │  Farcaster  │                                            │
+│  │  (Neynar)   │                                            │
+│  └─────────────┘                                            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -101,7 +100,7 @@ Watch PixelOracle create, mint, and post autonomously:
 
 - Node.js 18+
 - A wallet with ETH on Base (for gas fees)
-- API keys for: OpenAI, Pinata, and optionally Neynar/Twitter
+- API keys for: OpenAI, Pinata, and Neynar (for Farcaster)
 
 ### Installation
 
@@ -128,15 +127,9 @@ OPENAI_API_KEY=your_openai_key
 PINATA_API_KEY=your_pinata_key
 PINATA_SECRET_KEY=your_pinata_secret
 
-# Optional - Farcaster
+# Farcaster
 NEYNAR_API_KEY=your_neynar_key
 FARCASTER_SIGNER_UUID=your_signer_uuid
-
-# Optional - Twitter
-TWITTER_API_KEY=your_twitter_key
-TWITTER_API_SECRET=your_twitter_secret
-TWITTER_ACCESS_TOKEN=your_access_token
-TWITTER_ACCESS_SECRET=your_access_secret
 ```
 
 ### Deploy the Smart Contract
@@ -229,13 +222,6 @@ The PixelOracle smart contract includes:
 2. Create a new signer for your Farcaster account
 3. Add API key and signer UUID to `.env`
 
-### Twitter/X Setup
-
-1. Apply for Twitter Developer access
-2. Create a project with OAuth 1.0a
-3. Generate access tokens with read/write permissions
-4. Add all keys to `.env`
-
 ## 🛠️ Development
 
 ```bash
@@ -259,7 +245,7 @@ This project was built for the OpenClaw Builder Quest. PixelOracle demonstrates:
 - ✅ **Autonomous Operation** - No human in the loop
 - ✅ **On-Chain Transactions** - Mints NFTs on Base
 - ✅ **Smart Contract Implementation** - Custom ERC-721
-- ✅ **Social Integration** - Posts to Farcaster/X
+- ✅ **Social Integration** - Posts to Farcaster with images
 - ✅ **Novel Use Case** - AI artist with on-chain provenance
 
 ## 📄 License
@@ -274,4 +260,4 @@ Contributions welcome! Please read our contributing guidelines first.
 
 **Built with ✨ for the Base ecosystem**
 
-[Twitter](https://twitter.com/pixeloracle) | [Farcaster](https://warpcast.com/pixeloracle) | [BaseScan](https://basescan.org)
+[Farcaster](https://warpcast.com/pixel-oracle) | [OpenSea](https://opensea.io/collection/pixeloracle-413427511) | [BaseScan](https://basescan.org/address/0x09ED29b4b822a41bf14B2efE8C54bA753A35d5B6)
