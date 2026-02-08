@@ -123,100 +123,60 @@ export async function generateImage(prompt: string, retries = 2): Promise<Buffer
   console.log("🎨 Generating image...");
   console.log(`   Prompt: ${prompt.substring(0, 100)}...`);
 
-  if (config.aiProvider === "gemini" && gemini) {
-    return generateImageWithGemini(prompt, retries);
-  } else if (openai) {
-    return generateImageWithOpenAI(prompt, retries);
-  }
-  throw new Error("No AI provider available for image generation");
-}
-
-async function generateImageWithGemini(prompt: string, retries: number): Promise<Buffer> {
-  // Try Gemini native image gen first (works with free API key)
-  // Then fall back to Imagen 3 (requires Google Cloud billing)
+  // Primary: Pollinations.ai (FREE, no API key needed)
+  // Fallback: OpenAI DALL-E (if configured)
   for (let attempt = 1; attempt <= retries + 1; attempt++) {
     try {
-      return await generateImageWithGeminiNative(prompt);
+      return await generateImageWithPollinations(prompt);
     } catch (error: any) {
-      console.log(`   ⚠️ Gemini native attempt ${attempt} failed: ${error.message}`);
+      console.log(`   ⚠️ Pollinations attempt ${attempt} failed: ${error.message}`);
       if (attempt <= retries) {
         console.log(`   🔄 Retrying in 5 seconds...`);
         await new Promise(r => setTimeout(r, 5000));
-      } else {
-        // Fallback: try Imagen 3 API
-        console.log(`   🔄 Falling back to Imagen 3...`);
-        try {
-          return await generateImageWithImagen(prompt);
-        } catch (imagenError: any) {
-          console.log(`   ⚠️ Imagen 3 also failed: ${imagenError.message}`);
-          throw imagenError;
-        }
       }
     }
   }
+
+  // Fallback to OpenAI if available
+  if (openai) {
+    console.log("   🔄 Falling back to DALL-E 3...");
+    return generateImageWithOpenAI(prompt, retries);
+  }
+
   throw new Error("Image generation failed after all retries");
 }
 
-async function generateImageWithImagen(prompt: string): Promise<Buffer> {
-  // Imagen 3 via Gemini API — free tier supported
-  console.log("   🖼️ Generating with Imagen 3...");
-  
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${config.geminiApiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        instances: [{ prompt: `${prompt}. High quality digital art, 4K resolution, detailed, professional artwork.` }],
-        parameters: { sampleCount: 1, aspectRatio: "1:1" },
-      }),
-    }
-  );
+async function generateImageWithPollinations(prompt: string): Promise<Buffer> {
+  // Pollinations.ai — completely FREE, no API key, high quality images
+  console.log("   🖼️ Generating with Pollinations.ai (FREE)...");
+
+  const enhancedPrompt = `${prompt}. High quality digital art, 4K resolution, detailed, professional artwork.`;
+  const encodedPrompt = encodeURIComponent(enhancedPrompt);
+  const seed = Math.floor(Math.random() * 1000000);
+  const url = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 min timeout
+
+  const response = await fetch(url, {
+    signal: controller.signal,
+    redirect: "follow",
+  });
+  clearTimeout(timeoutId);
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Imagen API error: ${error.substring(0, 200)}`);
+    throw new Error(`Pollinations API error: HTTP ${response.status}`);
   }
 
-  const data = await response.json();
-  if (data.predictions && data.predictions[0]?.bytesBase64Encoded) {
-    const imageBuffer = Buffer.from(data.predictions[0].bytesBase64Encoded, "base64");
-    console.log("✅ Image generated with Imagen 3 (FREE)");
-    return imageBuffer;
-  }
-  
-  throw new Error("Imagen did not return image data");
-}
+  const arrayBuffer = await response.arrayBuffer();
+  const imageBuffer = Buffer.from(arrayBuffer);
 
-async function generateImageWithGeminiNative(prompt: string): Promise<Buffer> {
-  console.log("   🖼️ Generating with Gemini image generation (FREE)...");
-  
-  const model = gemini!.getGenerativeModel({ 
-    model: "gemini-2.0-flash",
-    generationConfig: {
-      // @ts-ignore - responseModalities supported but types may lag
-      responseModalities: ["TEXT", "IMAGE"],
-    } as any,
-  });
-
-  const result = await model.generateContent(
-    `Generate a high quality digital artwork: ${prompt}. Stunning, detailed, professional digital art.`
-  );
-
-  const candidates = result.response.candidates;
-  if (!candidates || candidates.length === 0) {
-    throw new Error("No candidates in Gemini response");
+  if (imageBuffer.length < 10000) {
+    throw new Error("Pollinations returned an image that is too small (likely an error)");
   }
 
-  for (const part of candidates[0].content.parts) {
-    if (part.inlineData && part.inlineData.mimeType?.startsWith("image/")) {
-      const imageBuffer = Buffer.from(part.inlineData.data!, "base64");
-      console.log("✅ Image generated with Gemini native (FREE)");
-      return imageBuffer;
-    }
-  }
-
-  throw new Error("Gemini did not return an image in response");
+  console.log(`✅ Image generated with Pollinations.ai (FREE) — ${(imageBuffer.length / 1024).toFixed(0)}KB`);
+  return imageBuffer;
 }
 
 async function generateImageWithOpenAI(prompt: string, retries: number): Promise<Buffer> {
