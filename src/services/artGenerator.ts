@@ -147,8 +147,9 @@ async function generateImageWithGemini(prompt: string, retries: number): Promise
         console.log(`   🔄 Falling back to Imagen 3...`);
         try {
           return await generateImageWithImagen(prompt);
-        } catch {
-          throw error;
+        } catch (imagenError: any) {
+          console.log(`   ⚠️ Imagen 3 also failed: ${imagenError.message}`);
+          throw imagenError;
         }
       }
     }
@@ -191,7 +192,7 @@ async function generateImageWithGeminiNative(prompt: string): Promise<Buffer> {
   console.log("   🖼️ Generating with Gemini image generation (FREE)...");
   
   const model = gemini!.getGenerativeModel({ 
-    model: "gemini-2.0-flash-exp",
+    model: "gemini-2.0-flash",
     generationConfig: {
       // @ts-ignore - responseModalities supported but types may lag
       responseModalities: ["TEXT", "IMAGE"],
