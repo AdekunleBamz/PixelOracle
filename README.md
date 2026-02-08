@@ -13,7 +13,7 @@ PixelOracle is a fully autonomous AI agent that creates, mints, and shares uniqu
 - **Truly Autonomous**: Runs 24/7 without human intervention
 - **Publicly Verifiable**: Live `/status` endpoint proves autonomy
 - **On-Chain Proof**: Every mint creates immutable blockchain records
-- **AI-Native**: Gemini/GPT-4 concepts + Imagen 3/DALL-E 3 artwork generation (FREE with Gemini!)
+- **AI-Native**: Gemini concepts + Pollinations.ai artwork generation (100% FREE, no API costs!)
 
 ## 🎥 Demo Video
 
@@ -23,7 +23,7 @@ Watch PixelOracle create, mint, and post autonomously:
 
 ## ✨ Features
 
-- 🎨 **AI Art Generation** - Uses Google Gemini (FREE) or DALL-E 3 to create unique artworks
+- 🎨 **AI Art Generation** - Uses Pollinations.ai (FREE, no key needed) to create unique artworks
 - ⛓️ **On-Chain Minting** - Automatically mints NFTs on Base
 - 📢 **Social Sharing** - Posts to Farcaster + X/Twitter automatically
 - 🔄 **Fully Autonomous** - Runs 24/7 without human intervention
@@ -71,15 +71,15 @@ Watch PixelOracle create, mint, and post autonomously:
 │                    PixelOracle Agent                        │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │Google Gemini│  │   Pinata    │  │    Base     │         │
-│  │ (FREE AI!)  │  │   (IPFS)    │  │ (Blockchain)│         │
+│  │   Gemini    │  │Pollinations │  │    Base     │         │
+│  │ (Concepts)  │  │ (Images)    │  │ (Blockchain)│         │
 │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘         │
 │         │                │                │                 │
 │         ▼                ▼                ▼                 │
 │  ┌─────────────────────────────────────────────────┐       │
 │  │              Autonomous Loop                     │       │
-│  │  1. Generate Art Concept (Gemini/GPT-4)          │       │
-│  │  2. Create Image (Imagen 3/DALL-E 3)             │       │
+│  │  1. Generate Art Concept (Gemini)                │       │
+│  │  2. Create Image (Pollinations.ai — FREE)        │       │
 │  │  3. Upload to IPFS (Pinata)                     │       │
 │  │  4. Mint NFT (Base)                             │       │
 │  │  5. Post to Social (Farcaster/X)                │       │
@@ -102,9 +102,10 @@ Watch PixelOracle create, mint, and post autonomously:
 
 - Node.js 18+
 - A wallet with ETH on Base (for gas fees)
-- Google Gemini API key (FREE at https://aistudio.google.com/apikey) OR OpenAI key
+- Google Gemini API key (FREE at https://aistudio.google.com/apikey) — for text/concept generation
 - Pinata API key (for IPFS)
 - Neynar API key (for Farcaster)
+- **No key needed** for image generation (Pollinations.ai is free & keyless)
 
 ### Installation
 
@@ -257,7 +258,7 @@ This project was built for the OpenClaw Builder Quest. PixelOracle demonstrates:
 - ✅ **Community Interaction** - Theme voting via mentions
 - ✅ **Collector Engagement** - Auto-thanks new minters
 - ✅ **Novel Use Case** - AI artist with on-chain provenance + community governance
-- ✅ **Free AI** - Runs on Google Gemini free tier (no API costs!)
+- ✅ **100% Free AI** - Gemini (text) + Pollinations.ai (images) — zero API costs!
 
 ## 📄 License
 
