@@ -22,6 +22,8 @@ import {
   startMintListener,
   startMentionListener,
   stopListeners,
+  getTopVotedTheme,
+  getThemeVotes,
 } from "./services/interactions.js";
 import http from "http";
 
@@ -154,6 +156,13 @@ function startKeepAliveServer() {
           opensea: "https://opensea.io/collection/pixeloracle-413427511",
           basescan: `https://basescan.org/address/${agentState.contractAddress}`,
         },
+        
+        // Community theme voting
+        communityVoting: {
+          description: "Tag @pixeloracle with 'vote <theme>' to pick the next art theme!",
+          availableThemes: ["surreal", "cyberpunk", "abstract", "cosmic", "dreamscape", "vaporwave", "minimalist", "glitch", "nature", "geometric"],
+          currentVotes: getThemeVotes(),
+        },
           
         // Recent errors (for debugging)
         recentErrors: agentState.errors.slice(-3),
@@ -236,11 +245,12 @@ async function createArtworkCycle(): Promise<void> {
       return;
     }
 
-    // Step 1: Generate art concept
+    // Step 1: Generate art concept (use community-voted theme if available)
     console.log("\n📝 Step 1: Generating art concept...");
-    const artConcept = await generateArtPrompt();
+    const communityTheme = getTopVotedTheme();
+    const artConcept = await generateArtPrompt(communityTheme || undefined);
     console.log(`   Title: ${artConcept.title}`);
-    console.log(`   Theme: ${artConcept.theme}`);
+    console.log(`   Theme: ${artConcept.theme}${communityTheme ? " (🗳️ community voted!)" : ""}`);
     console.log(`   Description: ${artConcept.description}`);
 
     // Step 2: Generate image

@@ -13,7 +13,7 @@ PixelOracle is a fully autonomous AI agent that creates, mints, and shares uniqu
 - **Truly Autonomous**: Runs 24/7 without human intervention
 - **Publicly Verifiable**: Live `/status` endpoint proves autonomy
 - **On-Chain Proof**: Every mint creates immutable blockchain records
-- **AI-Native**: GPT-4 concepts + DALL-E 3 artwork generation
+- **AI-Native**: Gemini/GPT-4 concepts + Imagen 3/DALL-E 3 artwork generation (FREE with Gemini!)
 
 ## 🎥 Demo Video
 
@@ -23,15 +23,17 @@ Watch PixelOracle create, mint, and post autonomously:
 
 ## ✨ Features
 
-- 🎨 **AI Art Generation** - Uses DALL-E 3 to create unique, stunning artworks
+- 🎨 **AI Art Generation** - Uses Google Gemini (FREE) or DALL-E 3 to create unique artworks
 - ⛓️ **On-Chain Minting** - Automatically mints NFTs on Base
-- 📢 **Social Sharing** - Posts to Farcaster automatically
-- 🔄 **Fully Autonomous** - Runs continuously without human intervention
-- 🎭 **Themed Collections** - Generates art across multiple themes (surreal, cyberpunk, cosmic, etc.)
+- 📢 **Social Sharing** - Posts to Farcaster + X/Twitter automatically
+- 🔄 **Fully Autonomous** - Runs 24/7 without human intervention
+- 🎭 **Themed Collections** - Generates art across 10+ themes (surreal, cyberpunk, cosmic, etc.)
 - 📊 **Public Status API** - `/status` endpoint for real-time monitoring
-- 🧠 **Context-Aware Replies** - Responds automatically when tagged on Farcaster
+- 🧠 **AI-Powered Replies** - Context-aware responses to mentions using Gemini/GPT
+- 🗳️ **Community Theme Voting** - Followers vote on next art theme via mentions
 - 💬 **Comment Interaction** - Replies to comments under its own posts
-- 🙏 **Mint Acknowledgements** - Posts thank-you messages when collectors mint (tx hash aware)
+- 🙏 **Mint Acknowledgements** - Polls for new collector mints and auto-thanks them
+- 💓 **On-Chain Heartbeat** - Periodic proof-of-autonomy transactions with stats
 
 ## 📡 Live Endpoints
 
@@ -69,15 +71,15 @@ Watch PixelOracle create, mint, and post autonomously:
 │                    PixelOracle Agent                        │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐         │
-│  │   OpenAI    │  │   Pinata    │  │    Base     │         │
-│  │  (DALL-E)   │  │   (IPFS)    │  │ (Blockchain)│         │
+│  │Google Gemini│  │   Pinata    │  │    Base     │         │
+│  │ (FREE AI!)  │  │   (IPFS)    │  │ (Blockchain)│         │
 │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘         │
 │         │                │                │                 │
 │         ▼                ▼                ▼                 │
 │  ┌─────────────────────────────────────────────────┐       │
 │  │              Autonomous Loop                     │       │
-│  │  1. Generate Art Concept (GPT-4)                │       │
-│  │  2. Create Image (DALL-E 3)                     │       │
+│  │  1. Generate Art Concept (Gemini/GPT-4)          │       │
+│  │  2. Create Image (Imagen 3/DALL-E 3)             │       │
 │  │  3. Upload to IPFS (Pinata)                     │       │
 │  │  4. Mint NFT (Base)                             │       │
 │  │  5. Post to Social (Farcaster/X)                │       │
@@ -100,7 +102,9 @@ Watch PixelOracle create, mint, and post autonomously:
 
 - Node.js 18+
 - A wallet with ETH on Base (for gas fees)
-- API keys for: OpenAI, Pinata, and Neynar (for Farcaster)
+- Google Gemini API key (FREE at https://aistudio.google.com/apikey) OR OpenAI key
+- Pinata API key (for IPFS)
+- Neynar API key (for Farcaster)
 
 ### Installation
 
@@ -123,7 +127,7 @@ Edit `.env` with your credentials:
 ```env
 # Required
 PRIVATE_KEY=your_wallet_private_key
-OPENAI_API_KEY=your_openai_key
+GEMINI_API_KEY=your_gemini_key      # FREE! Get at https://aistudio.google.com/apikey
 PINATA_API_KEY=your_pinata_key
 PINATA_SECRET_KEY=your_pinata_secret
 
@@ -246,11 +250,14 @@ npm run clean
 
 This project was built for the OpenClaw Builder Quest. PixelOracle demonstrates:
 
-- ✅ **Autonomous Operation** - No human in the loop
-- ✅ **On-Chain Transactions** - Mints NFTs on Base
-- ✅ **Smart Contract Implementation** - Custom ERC-721
-- ✅ **Social Integration** - Posts to Farcaster with images
-- ✅ **Novel Use Case** - AI artist with on-chain provenance
+- ✅ **Autonomous Operation** - No human in the loop, runs 24/7
+- ✅ **On-Chain Transactions** - Mints NFTs + heartbeat proofs on Base
+- ✅ **Smart Contract Implementation** - Custom ERC-721 with theme tracking
+- ✅ **Social Integration** - Posts to Farcaster + X with AI-powered replies
+- ✅ **Community Interaction** - Theme voting via mentions
+- ✅ **Collector Engagement** - Auto-thanks new minters
+- ✅ **Novel Use Case** - AI artist with on-chain provenance + community governance
+- ✅ **Free AI** - Runs on Google Gemini free tier (no API costs!)
 
 ## 📄 License
 

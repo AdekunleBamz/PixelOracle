@@ -7,6 +7,7 @@ export * from "./services/artGenerator.js";
 export * from "./services/blockchain.js";
 export * from "./services/ipfsUploader.js";
 export * from "./services/social.js";
+export * from "./services/interactions.js";
 
 // Re-export for programmatic usage
 import { config } from "./config.js";

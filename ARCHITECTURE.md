@@ -9,19 +9,20 @@ PixelOracle is an **autonomous AI artist agent** that operates 24/7 without huma
 │                    PIXELORACLE AUTONOMOUS AGENT                 │
 │                                                                 │
 │  ┌─────────────┐   ┌──────────────┐   ┌─────────────────────┐  │
-│  │   OpenAI    │   │    DALL-E 3  │   │   Agent Core Loop   │  │
-│  │   GPT-4     │──▶│   Image Gen  │──▶│   (Autonomous)      │  │
-│  │  (Concepts) │   │              │   │                     │  │
+│  │   Gemini /   │   │  Imagen 3 /  │   │   Agent Core Loop   │  │
+│  │   GPT-4      │──▶│   DALL-E 3   │──▶│   (Autonomous)      │  │
+│  │  (Concepts)  │   │  (FREE!)     │   │                     │  │
 │  └─────────────┘   └──────────────┘   └──────────┬──────────┘  │
 │                                                   │             │
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │                    Autonomous Cycle                      │   │
-│  │  1. Generate Art Concept (GPT-4)                        │   │
-│  │  2. Create Image (DALL-E 3)                             │   │
-│  │  3. Upload to IPFS (Pinata)                             │   │
-│  │  4. Mint NFT on Base (ERC-721)                          │   │
-│  │  5. Post to Social Media (X + Farcaster)                │   │
-│  │  6. Wait for next interval                              │   │
+│  │  1. Check community theme votes                        │   │
+│  │  2. Generate Art Concept (Gemini/GPT-4)                 │   │
+│  │  3. Create Image (Imagen 3/DALL-E 3 — FREE!)           │   │
+│  │  4. Upload to IPFS (Pinata)                             │   │
+│  │  5. Mint NFT on Base (ERC-721)                          │   │
+│  │  6. Post to Social Media (X + Farcaster)                │   │
+│  │  7. Wait for next interval                              │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
@@ -100,11 +101,12 @@ START
 
 ### 2. Art Generator (`src/services/artGenerator.ts`)
 - **Purpose**: AI-powered content creation
-- **Uses**: OpenAI GPT-4 + DALL-E 3
+- **Uses**: Google Gemini (FREE) or OpenAI GPT-4 + Imagen 3 / DALL-E 3
 - **Functions**:
-  - `generateArtPrompt()` - Creates unique art concepts
-  - `generateImage()` - Renders artwork from prompts
+  - `generateArtPrompt()` - Creates unique art concepts (supports community theme override)
+  - `generateImage()` - Renders artwork from prompts (Imagen 3 or DALL-E)
   - `generateOracleMessage()` - Crafts social media posts
+  - `generateAIReply()` - Context-aware reply generation for mentions
 
 ### 3. Blockchain Service (`src/services/blockchain.ts`)
 - **Purpose**: Base blockchain interactions

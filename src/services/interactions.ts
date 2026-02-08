@@ -1,6 +1,7 @@
 import { config, publicClient, pixelOracleABI } from "../config.js";
 import { postToFarcaster, postToTwitter } from "./social.js";
 import { getBaseScanUrl, getOpenSeaUrl } from "./blockchain.js";
+import { generateAIReply } from "./artGenerator.js";
 
 // ============================================
 // ABI Extensions for Events
@@ -38,65 +39,133 @@ const processedFarcasterMentions = new Set<string>();
 const processedTwitterMentions = new Set<string>();
 
 // ============================================
-// Listen for New Mints (Thank Collectors)
+// Community Theme Voting (via Farcaster mentions)
 // ============================================
+
+const themeVotes = new Map<string, number>();
+const validThemes = ["surreal", "cyberpunk", "abstract", "cosmic", "dreamscape", "vaporwave", "minimalist", "glitch", "nature", "geometric"];
+
+export function getTopVotedTheme(): string | null {
+  if (themeVotes.size === 0) return null;
+  
+  let topTheme: string | null = null;
+  let topVotes = 0;
+  
+  for (const [theme, votes] of themeVotes.entries()) {
+    if (votes > topVotes) {
+      topTheme = theme;
+      topVotes = votes;
+    }
+  }
+  
+  // Reset votes after consuming
+  if (topTheme && topVotes > 0) {
+    console.log(`   🗳️ Community chose theme: "${topTheme}" with ${topVotes} votes!`);
+    themeVotes.clear();
+    return topTheme;
+  }
+  
+  return null;
+}
+
+export function getThemeVotes(): Record<string, number> {
+  return Object.fromEntries(themeVotes);
+}
+
+function processThemeVote(text: string, username: string): string | null {
+  const lower = text.toLowerCase();
+  
+  // Check for "vote <theme>" or "theme <theme>" pattern
+  const voteMatch = lower.match(/(?:vote|theme|request|create|paint|draw)\s+(\w+)/);
+  if (!voteMatch) return null;
+  
+  const requestedTheme = voteMatch[1];
+  
+  // Check if it's a valid theme
+  const matchedTheme = validThemes.find(t => t.startsWith(requestedTheme) || requestedTheme.startsWith(t));
+  if (!matchedTheme) return null;
+  
+  // Record the vote
+  themeVotes.set(matchedTheme, (themeVotes.get(matchedTheme) || 0) + 1);
+  const currentVotes = themeVotes.get(matchedTheme) || 0;
+  
+  console.log(`   🗳️ @${username} voted for theme: "${matchedTheme}" (${currentVotes} total votes)`);
+  
+  return matchedTheme;
+}
+
+// ============================================
+// Listen for New Mints via Polling (works on public RPCs)
+// ============================================
+
+let mintPollInterval: NodeJS.Timeout | null = null;
+let lastKnownSupply: bigint = BigInt(0);
 
 export async function startMintListener(
   agentAddress: string,
   contractAddress: `0x${string}`
 ): Promise<void> {
-  console.log("👂 Mint listener for collector thank-yous...");
+  console.log("👂 Starting mint listener (polling mode)...");
   
-  // Note: Disabled due to public RPC limitations with event filters
-  // The free Base RPC doesn't support eth_newFilter/eth_getFilterChanges reliably
-  // To enable: use a paid RPC like Alchemy or Infura that supports WebSocket/filters
-  console.log("   ⚠️ Mint listener disabled (public RPC doesn't support filters)");
-  console.log("   💡 Tip: Use Alchemy/Infura RPC to enable this feature");
-  return;
-
-  // Original code kept for reference - uncomment with a proper RPC:
-  /*
-  // Watch for ArtworkCreated events
-  publicClient.watchContractEvent({
-    address: contractAddress,
-    abi: extendedABI,
-    eventName: "ArtworkCreated",
-    onLogs: async (logs) => {
-      for (const log of logs) {
-        const { tokenId, creator, metadataURI, timestamp } = log.args as {
-          tokenId: bigint;
-          creator: string;
-          metadataURI: string;
-          timestamp: bigint;
-        };
-
-        // Skip if this is our own mint
-        if (creator.toLowerCase() === agentAddress.toLowerCase()) {
-          continue;
+  try {
+    // Get initial supply
+    lastKnownSupply = await publicClient.readContract({
+      address: contractAddress,
+      abi: pixelOracleABI,
+      functionName: "totalSupply",
+    }) as bigint;
+    console.log(`   📊 Current supply: ${lastKnownSupply}`);
+  } catch (error: any) {
+    console.log(`   ⚠️ Could not read initial supply: ${error.message}`);
+    return;
+  }
+  
+  // Poll every 3 minutes for new mints
+  mintPollInterval = setInterval(async () => {
+    try {
+      const currentSupply = await publicClient.readContract({
+        address: contractAddress,
+        abi: pixelOracleABI,
+        functionName: "totalSupply",
+      }) as bigint;
+      
+      if (currentSupply > lastKnownSupply) {
+        const newMints = Number(currentSupply - lastKnownSupply);
+        console.log(`\n🎉 ${newMints} NEW MINT(S) DETECTED!`);
+        
+        // Check each new token
+        for (let i = Number(lastKnownSupply); i < Number(currentSupply); i++) {
+          try {
+            const owner = await publicClient.readContract({
+              address: contractAddress,
+              abi: [{
+                inputs: [{ name: "tokenId", type: "uint256" }],
+                name: "ownerOf",
+                outputs: [{ name: "", type: "address" }],
+                stateMutability: "view",
+                type: "function",
+              }],
+              functionName: "ownerOf",
+              args: [BigInt(i)],
+            }) as string;
+            
+            // Only thank if not our own mint
+            if (owner.toLowerCase() !== agentAddress.toLowerCase()) {
+              await thankCollector(owner, BigInt(i), "");
+            }
+          } catch {
+            // Token might not exist yet, skip
+          }
         }
-
-        // Skip if already processed
-        const eventKey = `${log.transactionHash}-${tokenId}`;
-        if (processedMints.has(eventKey)) {
-          continue;
-        }
-        processedMints.add(eventKey);
-
-        console.log(`\n🎉 NEW COLLECTOR MINT DETECTED!`);
-        console.log(`   Token ID: ${tokenId}`);
-        console.log(`   Collector: ${creator}`);
-
-        // Generate thank you message
-        await thankCollector(collector, tokenId, log.transactionHash || "");
+        
+        lastKnownSupply = currentSupply;
       }
-    },
-    onError: (error) => {
-      console.error("❌ Mint listener error:", error.message);
-    },
-  });
-
-  console.log("   ✅ Mint listener active");
-  */
+    } catch (error: any) {
+      // Silent fail — polling errors are non-critical
+    }
+  }, 3 * 60 * 1000); // Every 3 minutes
+  
+  console.log("   ✅ Mint listener active (polling every 3 min)");
 }
 
 // ============================================
@@ -226,8 +295,17 @@ async function checkAndReplyToFarcasterMentions(): Promise<void> {
       // Mark as processed
       processedFarcasterMentions.add(cast.hash);
 
-      // Generate reply
-      const reply = await generateMentionReply(cast.text, cast.author?.username);
+      // Check for theme vote first
+      const votedTheme = processThemeVote(cast.text, cast.author?.username || "anon");
+      
+      let reply: string | null;
+      if (votedTheme) {
+        // Acknowledge the theme vote
+        reply = `🗳️ Vote recorded! You voted for "${votedTheme}" theme, @${cast.author?.username}. The Oracle hears the community! 🔮`;
+      } else {
+        // Generate AI-powered reply
+        reply = await generateAIReply(cast.text, cast.author?.username);
+      }
       
       if (reply) {
         await replyToCast(cast.hash, reply);
@@ -298,8 +376,8 @@ async function checkAndReplyToTwitterMentions(): Promise<void> {
       // Get username
       const username = users.get(tweet.author_id || "") || "friend";
 
-      // Generate reply
-      const reply = await generateMentionReply(tweet.text, username);
+      // Generate AI-powered reply
+      const reply = await generateAIReply(tweet.text, username);
 
       if (reply) {
         try {
@@ -322,44 +400,6 @@ async function checkAndReplyToTwitterMentions(): Promise<void> {
   } catch (error: any) {
     console.log(`   ⚠️ Twitter mention check failed: ${error.message}`);
   }
-}
-
-async function generateMentionReply(mentionText: string, username?: string): Promise<string | null> {
-  // Simple keyword-based responses (could use GPT for smarter replies)
-  const text = mentionText.toLowerCase();
-  const user = username ? `@${username}` : "friend";
-
-  if (text.includes("gm") || text.includes("good morning")) {
-    return `gm ${user} ☀️ The Oracle sees a creative day ahead for you! 🔮`;
-  }
-
-  if (text.includes("hello") || text.includes("hi ") || text.includes("hey")) {
-    return `Hello ${user}! 👋 The Oracle welcomes you. What vision do you seek? 🔮`;
-  }
-
-  if (text.includes("love") || text.includes("amazing") || text.includes("beautiful") || text.includes("great")) {
-    return `Thank you ${user}! 🙏 The Oracle is grateful for your kind words. Art thrives on appreciation. ✨`;
-  }
-
-  if (text.includes("when") || text.includes("next")) {
-    return `${user}, the Oracle creates on its own rhythm 🎨 New visions emerge every hour. Stay tuned! ⏰`;
-  }
-
-  if (text.includes("how") && (text.includes("work") || text.includes("make") || text.includes("create"))) {
-    return `${user}, I am an autonomous AI agent 🤖 I generate art with DALL-E, mint NFTs on Base, and share them here — all without human intervention! 🔮`;
-  }
-
-  if (text.includes("buy") || text.includes("mint") || text.includes("collect")) {
-    return `${user}, you can collect my art on OpenSea! 🖼️ Each piece is minted on Base. Check the link in my bio! 💎`;
-  }
-
-  // Default: acknowledge but don't spam
-  if (Math.random() < 0.3) {
-    // Only respond to 30% of other mentions to avoid spam
-    return `The Oracle acknowledges you, ${user} 🔮✨`;
-  }
-
-  return null; // Don't reply to everything
 }
 
 async function replyToCast(parentHash: string, text: string): Promise<void> {
@@ -386,6 +426,10 @@ async function replyToCast(parentHash: string, text: string): Promise<void> {
 // ============================================
 
 export function stopListeners(): void {
+  if (mintPollInterval) {
+    clearInterval(mintPollInterval);
+    mintPollInterval = null;
+  }
   if (farcasterMentionInterval) {
     clearInterval(farcasterMentionInterval);
     farcasterMentionInterval = null;

@@ -9,6 +9,14 @@ dotenv.config();
 // Environment Validation
 // ============================================
 
+function requireOneOf(...keys: string[]): string {
+  for (const key of keys) {
+    const value = process.env[key];
+    if (value) return value;
+  }
+  throw new Error(`❌ Missing required environment variable: one of ${keys.join(", ")}`);
+}
+
 function requireEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
@@ -25,14 +33,23 @@ function optionalEnv(key: string, defaultValue: string = ""): string {
 // Configuration Export
 // ============================================
 
+// Determine AI provider: prefer Gemini (free), fall back to OpenAI
+const aiProvider = process.env.GEMINI_API_KEY ? "gemini" : "openai";
+
 export const config = {
   // Blockchain
   privateKey: requireEnv("PRIVATE_KEY") as `0x${string}`,
   contractAddress: optionalEnv("NFT_CONTRACT_ADDRESS") as `0x${string}`,
   network: optionalEnv("NETWORK", "baseSepolia") as "base" | "baseSepolia",
 
-  // OpenAI
-  openaiApiKey: requireEnv("OPENAI_API_KEY"),
+  // AI Provider ("gemini" or "openai")
+  aiProvider: aiProvider as "gemini" | "openai",
+
+  // Google Gemini (FREE — preferred)
+  geminiApiKey: optionalEnv("GEMINI_API_KEY"),
+
+  // OpenAI (fallback — paid)
+  openaiApiKey: optionalEnv("OPENAI_API_KEY"),
 
   // Pinata (IPFS)
   pinataApiKey: requireEnv("PINATA_API_KEY"),
@@ -145,3 +162,4 @@ export const pixelOracleABI = [
 console.log("⚙️ Configuration loaded");
 console.log(`   Network: ${config.network}`);
 console.log(`   Wallet: ${account.address}`);
+console.log(`   AI Provider: ${config.aiProvider === "gemini" ? "🟢 Google Gemini (FREE)" : "🟠 OpenAI (paid)"}`);
